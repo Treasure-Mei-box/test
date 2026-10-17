@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{github.repository}}
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   lint-and-test:
@@ -37,7 +37,7 @@ jobs:
           
       - name: Run Unit Tests with Pytest
         run: |
-         pytest || true
+          pytest || true
     
   build-and-push-docker:
     name: Container Packaging & Push
@@ -54,27 +54,27 @@ jobs:
       - name: Log in to Github Container Registry 
         uses: docker/login-action@v3
         with:
-          registry: ${{env.REGISTRY}}
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Docker Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type = sha, format = long
-            type = ref, event = branch
+            type=sha,format=long
+            type=ref,event=branch
             latest
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{github.ref == 'refs/heads/main'}}
-          tags: ${{steps.meta.outputs.tags}}
-          labels: ${{steps.meta.outputs.labels}}
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
   deploy-to-azure:
     name: Deploy to Azure App Services
@@ -86,8 +86,6 @@ jobs:
       - name: Deploy Container to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'YLS-testing' #this is the app name set in azure web services
-          publish-profile: ${{secrets.YLS_TESTING_PUBLISH_PROFILE}}
-          images: 'ghcr.io/${{github.repository}}:latest'
-          
-          
+          app-name: 'YLS-testing'
+          publish-profile: ${{ secrets.YLS_TESTING_PUBLISH_PROFILE }}
+          images: 'ghcr.io/${{ github.repository }}:latest'
