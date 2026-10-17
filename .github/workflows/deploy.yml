@@ -86,7 +86,7 @@ jobs:
       - name: Deploy Container to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'YLS-testing' //this is the app name set in azure web services
+          app-name: 'YLS-testing' #this is the app name set in azure web services
           pusblish-profile: ${{secrets.YLS_TESTING_PUBLISH_PROFILE}}
           images: 'ghcr.io/${{github.repository}}:latest'
           
