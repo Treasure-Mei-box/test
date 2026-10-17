@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+    <h2>Shipment Fulfilment</h2>
+    <p>Only paid, fulfilment, and completed orders are shown here.</p>
+</section>
+<section class="card">
+    {% if not orders %}
+        <p>No paid orders are currently ready for shipment.</p>
+    {% else %}
+        <table>
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Order Status</th><th>Shipment Status</th><th>Manage</th></tr></thead>
+            <tbody>
+            {% for order in orders %}
+                <tr>
+                    <td>#{{ order.id }}</td><td>{{ order.customer_name }}</td><td>${{ "%.2f"|format(order.total_amount) }}</td>
+                    <td>{{ order.order_status }}</td><td>{{ order.shipment_status or "Not created" }}</td>
+                    <td><a href="{{ url_for('main.manage_shipment', order_id=order.id) }}">Manage</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</section>
+{% endblock %}

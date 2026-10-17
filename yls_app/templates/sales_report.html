@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+    <h2>Sales Report</h2>
+    <div class="grid two">
+        <div class="panel"><h3>Total Orders</h3><p class="metric">{{ orders|length }}</p></div>
+        <div class="panel"><h3>Total Sales</h3><p class="metric">${{ "%.2f"|format(total_sales) }}</p></div>
+    </div>
+</section>
+<section class="card">
+    {% if not orders %}
+        <p>No paid or completed orders are available for reporting.</p>
+    {% else %}
+        <table>
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Date</th><th>Status</th><th>Total</th></tr></thead>
+            <tbody>
+            {% for order in orders %}
+                <tr>
+                    <td>#{{ order.id }}</td><td>{{ order.customer_name }}</td><td>{{ order.created_at }}</td>
+                    <td>{{ order.order_status }}</td><td>${{ "%.2f"|format(order.total_amount) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</section>
+{% endblock %}

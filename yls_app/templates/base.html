@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Your Local Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+    <div>
+        <h1>Your Local Shop</h1>
+        <p>Online Convenience Store System</p>
+    </div>
+    <nav>
+        <a href="{{ url_for('main.index') }}">Home</a>
+        <a href="{{ url_for('main.catalogue') }}">Catalogue</a>
+
+        {% if current_user and current_user.role == 'CUSTOMER' %}
+            <a href="{{ url_for('main.cart') }}">Cart</a>
+            <a href="{{ url_for('main.my_orders') }}">My Orders</a>
+        {% endif %}
+
+        {% if current_user and current_user.role == 'STAFF' %}
+            <a href="{{ url_for('main.staff_products') }}">Products</a>
+            <a href="{{ url_for('main.staff_shipments') }}">Shipments</a>
+            <a href="{{ url_for('main.sales_report') }}">Sales Report</a>
+        {% endif %}
+
+        {% if current_user %}
+            <span class="user-chip">{{ current_user.name }} ({{ current_user.role }})</span>
+            <a href="{{ url_for('main.logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('main.login') }}">Login</a>
+            <a href="{{ url_for('main.register') }}">Register</a>
+        {% endif %}
+    </nav>
+</header>
+
+<main class="page">
+    {% for message in get_flashed_messages() %}
+        <div class="message">{{ message }}</div>
+    {% endfor %}
+
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

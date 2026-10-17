@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card narrow">
+    <h2>Manage Shipment for Order #{{ order.id }}</h2>
+    <form method="post">
+        <label>Shipment Status</label>
+        <select name="shipment_status">
+            {% for status in shipment_statuses %}
+                <option value="{{ status }}" {% if shipment and shipment.shipment_status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+        <label>Tracking Number</label>
+        <input name="tracking_number" value="{{ shipment.tracking_number if shipment else '' }}">
+        <button type="submit">Update Shipment</button>
+    </form>
+</section>
+{% endblock %}
