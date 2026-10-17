@@ -1,8 +1,8 @@
 FROM python:3.10-slim
 WORKDIR /app
 
-COPY requirments.txt requirments.txt
-RUN pip install --no-cache-dir -r requirments.txt
+COPY requirements.txt requiements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 EXPOSE 8000
