@@ -42,8 +42,8 @@ jobs:
 
       - name: Run Unit Tests with Pytest
         run: |
-          # Failing tests now stop the pipeline (no "|| true").
-          # Note: pytest exits with code 5 if no tests are found, so keep at least one test.
+          # Failing tests stop the pipeline (no "|| true").
+          # pytest exits with code 5 if no tests are found, so keep at least one test.
           pytest -v
 
   # ---------------------------------------------------------------
@@ -102,6 +102,7 @@ jobs:
         run: echo "IMAGE=${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - name: Deploy Container to Azure Test Web App
+        id: deploy
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'YLS-testing'
@@ -110,11 +111,15 @@ jobs:
           images: ${{ env.IMAGE }}:sha-${{ github.sha }}
 
       - name: Smoke Test (test environment)
+        env:
+          # Uses the APP_URL variable of the "test" environment if set,
+          # otherwise falls back to the URL returned by the deploy step.
+          APP_URL: ${{ vars.APP_URL || steps.deploy.outputs.webapp-url }}
         run: |
-          # Retries while the container starts. Change the path to /health if you have one.
+          echo "Testing: $APP_URL/health"
           curl --fail --silent --show-error \
                --retry 12 --retry-delay 10 --retry-connrefused \
-               https://yls-testing.azurewebsites.net/
+               "$APP_URL/health"
 
   # ---------------------------------------------------------------
   # CD (2/2): deploy to PRODUCTION after test passes.
@@ -133,14 +138,18 @@ jobs:
         run: echo "IMAGE=${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - name: Deploy Container to Azure Production Web App
+        id: deploy
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'YLS-production'
-          publish-profile: ${{ secrets.YLS_TESTING_PUBLISH_PROFILE }}
+          publish-profile: ${{ secrets.YLS_PROD_PUBLISH_PROFILE }}
           images: ${{ env.IMAGE }}:sha-${{ github.sha }}
 
       - name: Smoke Test (production)
+        env:
+          APP_URL: ${{ vars.APP_URL || steps.deploy.outputs.webapp-url }}
         run: |
+          echo "Testing: $APP_URL/health"
           curl --fail --silent --show-error \
                --retry 12 --retry-delay 10 --retry-connrefused \
-               https://yls-production.azurewebsites.net/
+               "$APP_URL/health"
