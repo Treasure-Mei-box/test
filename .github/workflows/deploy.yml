@@ -136,7 +136,7 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'YLS-production'
-          publish-profile: ${{ secrets.YLS_PROD_PUBLISH_PROFILE }}
+          publish-profile: ${{ secrets.YLS_TESTING_PUBLISH_PROFILE }}
           images: ${{ env.IMAGE }}:sha-${{ github.sha }}
 
       - name: Smoke Test (production)
