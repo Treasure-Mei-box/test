@@ -43,7 +43,6 @@ jobs:
       - name: Run Unit Tests with Pytest
         run: |
           # Failing tests stop the pipeline (no "|| true").
-          # pytest exits with code 5 if no tests are found, so keep at least one test.
           pytest -v
 
   # ---------------------------------------------------------------
@@ -87,10 +86,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   # ---------------------------------------------------------------
-  # CD (1/2): deploy to the TEST environment + smoke test
+  # CD (1/2): TEST stage -> Azure app "YLS-production" (used as test for now)
   # ---------------------------------------------------------------
   deploy-to-test:
-    name: Deploy to Test (Azure App Service)
+    name: Deploy to Test (Azure App: YLS-production)
     needs: build-and-push-docker
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -101,33 +100,32 @@ jobs:
       - name: Compute lowercase image name
         run: echo "IMAGE=${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
-      - name: Deploy Container to Azure Test Web App
+      - name: Deploy Container to Azure (test stage)
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'YLS-testing'
-          publish-profile: ${{ secrets.YLS_TESTING_PUBLISH_PROFILE }}
-          # Deploy the exact commit's image so you can prove which build is running
+          app-name: 'YLS-production'
+          # Must be the publish profile downloaded from the YLS-production app
+          publish-profile: ${{ secrets.YLS_PROD_PUBLISH_PROFILE }}
           images: ${{ env.IMAGE }}:sha-${{ github.sha }}
 
-      - name: Smoke Test (test environment)
+      - name: Smoke Test (test stage)
         env:
-          # Uses the APP_URL variable of the "test" environment if set,
-          # otherwise falls back to the URL returned by the deploy step.
-          APP_URL: ${{ vars.APP_URL || steps.deploy.outputs.webapp-url }}
+          # URL returned by the deploy step, so it always tests the app just deployed
+          APP_URL: ${{ steps.deploy.outputs.webapp-url }}
         run: |
           echo "Testing: $APP_URL/health"
           curl --fail --silent --show-error \
-               --retry 12 --retry-delay 10 --retry-connrefused \
+               --retry 30 --retry-delay 10 --retry-connrefused \
                "$APP_URL/health"
 
   # ---------------------------------------------------------------
-  # CD (2/2): deploy to PRODUCTION after test passes.
-  # In GitHub: Settings > Environments > production > "Required reviewers"
-  # makes this a manual approval gate (deferred deployment).
+  # CD (2/2): PRODUCTION stage -> Azure app "YLS-testing" (used as production for now)
+  # Add "Required reviewers" on the "production" environment in GitHub
+  # for a manual approval gate (deferred deployment).
   # ---------------------------------------------------------------
   deploy-to-production:
-    name: Deploy to Production (Azure App Service)
+    name: Deploy to Production (Azure App: YLS-testing)
     needs: deploy-to-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -137,19 +135,20 @@ jobs:
       - name: Compute lowercase image name
         run: echo "IMAGE=${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
-      - name: Deploy Container to Azure Production Web App
+      - name: Deploy Container to Azure (production stage)
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'YLS-production'
-          publish-profile: ${{ secrets.YLS_PROD_PUBLISH_PROFILE }}
+          app-name: 'YLS-testing'
+          # Must be the publish profile downloaded from the YLS-testing app
+          publish-profile: ${{ secrets.YLS_TESTING_PUBLISH_PROFILE }}
           images: ${{ env.IMAGE }}:sha-${{ github.sha }}
 
-      - name: Smoke Test (production)
+      - name: Smoke Test (production stage)
         env:
-          APP_URL: ${{ vars.APP_URL || steps.deploy.outputs.webapp-url }}
+          APP_URL: ${{ steps.deploy.outputs.webapp-url }}
         run: |
           echo "Testing: $APP_URL/health"
           curl --fail --silent --show-error \
-               --retry 12 --retry-delay 10 --retry-connrefused \
+               --retry 30 --retry-delay 10 --retry-connrefused \
                "$APP_URL/health"
