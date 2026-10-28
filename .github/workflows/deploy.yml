@@ -89,7 +89,7 @@ jobs:
   # CD (1/2): TEST stage -> Azure app "YLS-production" (used as test for now)
   # ---------------------------------------------------------------
   deploy-to-test:
-    name: Deploy to Test (Azure App: YLS-production)
+    name: "Deploy to Test (Azure App YLS-production)"
     needs: build-and-push-docker
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -125,7 +125,7 @@ jobs:
   # for a manual approval gate (deferred deployment).
   # ---------------------------------------------------------------
   deploy-to-production:
-    name: Deploy to Production (Azure App: YLS-testing)
+    name: "Deploy to Production (Azure App YLS-testing)"
     needs: deploy-to-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
